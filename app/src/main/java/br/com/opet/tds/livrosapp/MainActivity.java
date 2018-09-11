@@ -92,11 +92,12 @@ public class MainActivity extends Activity implements View.OnClickListener{
         mQuery.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                GenericTypeIndicator<HashMap<String, Livro>> t = new GenericTypeIndicator<HashMap<String, Livro>>(){};
-                HashMap<String, Livro> livros = dataSnapshot.getValue(t);
+                //GenericTypeIndicator<HashMap<String, Livro>> t = new GenericTypeIndicator<HashMap<String, Livro>>(){};
+                //HashMap<String, Livro> livros = dataSnapshot.getValue(t);
 
                 List<String> livrosNomes = new ArrayList<String>();
-                Iterator<String> itr = livros.keySet().iterator();
+                
+                /*Iterator<String> itr = livros.keySet().iterator();
                 Livro livro = null;
                 String key;
                 while(itr.hasNext()) {
@@ -104,12 +105,11 @@ public class MainActivity extends Activity implements View.OnClickListener{
                     livro = livros.get(key);
                     Log.d("Debug", "#" + key + " - Livro: " + livro.getTitulo());
                     livrosNomes.add(livro.getTitulo());
+                }*/
+                
+                for(DataSnapshot livroSnapshot : dataSnapshot.getChildren()){
+                    livrosNomes.add(livroSnapshot.getValue(Livro.class).getTitulo());
                 }
-
-                /*ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this,android.R.layout.simple_spinner_item,generos);
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spinnerGenero.setAdapter(adapter);
-                progressGeneros.setVisibility(ProgressBar.GONE);*/
 
                 ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this,android.R.layout.simple_list_item_1, livrosNomes);
                 listLivros.setAdapter(adapter);
