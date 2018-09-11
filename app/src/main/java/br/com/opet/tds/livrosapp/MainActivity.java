@@ -3,10 +3,12 @@ package br.com.opet.tds.livrosapp;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -23,6 +25,8 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 public class MainActivity extends Activity implements View.OnClickListener{
@@ -31,6 +35,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
     private Spinner spinnerGenero;
     private Button btnSalvar;
     private ProgressBar progressGeneros, progressLivros;
+    private ListView listLivros;
 
     private DatabaseReference mDatabase;
 
@@ -46,7 +51,10 @@ public class MainActivity extends Activity implements View.OnClickListener{
         btnSalvar = findViewById(R.id.btnSalvar);
         progressGeneros = findViewById(R.id.progressListaGeneros);
         progressLivros = findViewById(R.id.progressListaCadastrados);
+        listLivros = findViewById(R.id.listLivros);
+
         btnSalvar.setOnClickListener(this);
+
         generos = new ArrayList<String>();
         mDatabase = FirebaseDatabase.getInstance().getReference();
     }
@@ -55,6 +63,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
     protected void onStart(){
         super.onStart();
         carregarListaDeGeneros();
+        carregarListaDeLivros();
     }
 
     private void carregarListaDeGeneros() {
@@ -69,6 +78,42 @@ public class MainActivity extends Activity implements View.OnClickListener{
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spinnerGenero.setAdapter(adapter);
                 progressGeneros.setVisibility(ProgressBar.GONE);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void carregarListaDeLivros() {
+        Query mQuery = mDatabase.child("livros").orderByKey();
+        mQuery.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                GenericTypeIndicator<HashMap<String, Livro>> t = new GenericTypeIndicator<HashMap<String, Livro>>(){};
+                HashMap<String, Livro> livros = dataSnapshot.getValue(t);
+
+                List<String> livrosNomes = new ArrayList<String>();
+                Iterator<String> itr = livros.keySet().iterator();
+                Livro livro = null;
+                String key;
+                while(itr.hasNext()) {
+                    key = itr.next();
+                    livro = livros.get(key);
+                    Log.d("Debug", "#" + key + " - Livro: " + livro.getTitulo());
+                    livrosNomes.add(livro.getTitulo());
+                }
+
+                /*ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this,android.R.layout.simple_spinner_item,generos);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinnerGenero.setAdapter(adapter);
+                progressGeneros.setVisibility(ProgressBar.GONE);*/
+
+                ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this,android.R.layout.simple_list_item_1, livrosNomes);
+                listLivros.setAdapter(adapter);
+                progressLivros.setVisibility(ProgressBar.GONE);
             }
 
             @Override
@@ -93,6 +138,8 @@ public class MainActivity extends Activity implements View.OnClickListener{
             @Override
             public void onSuccess(Void aVoid) {
                 Toast.makeText(MainActivity.this, "Livro Salvo!", Toast.LENGTH_SHORT).show();
+                progressLivros.setVisibility(ProgressBar.VISIBLE);
+                carregarListaDeLivros();
             }
         })
                 .addOnFailureListener(new OnFailureListener() {
